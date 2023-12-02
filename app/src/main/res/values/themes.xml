@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.MVIDemo" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.MVIDemo" parent="Theme.MaterialComponents.Light.NoActionBar" />
+
+    <style name="roundedImageStyle">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">24dp</item>
+    </style>
 </resources>
