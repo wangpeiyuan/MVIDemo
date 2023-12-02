@@ -2,11 +2,12 @@ package com.edgar.mvidemo.ui
 
 import android.os.Bundle
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -20,6 +21,7 @@ import com.edgar.mvidemo.network.RetrofitUtils
 import com.edgar.mvidemo.utils.gone
 import com.edgar.mvidemo.utils.show
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
@@ -33,8 +35,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val imageAdapter: ImageAdapter by lazy {
-        ImageAdapter() { imageInfoBean ->
-
+        ImageAdapter { imageInfoBean ->
+            //todo
         }
     }
 
@@ -45,41 +47,61 @@ class MainActivity : AppCompatActivity() {
         this.binding = binding
 
         init()
-        loadData()
     }
 
     private fun init() {
         binding?.rvImages?.adapter = imageAdapter
-        binding?.btnRetry?.setOnClickListener { loadData() }
+        binding?.btnLoadData?.setOnClickListener { loadData() }
 
         observeState()
+        observeEffect()
     }
 
     private fun observeState() {
         lifecycleScope.launch {
-            viewModel.state.collect {
-                when (it) {
-                    is MainState.Idle -> {}
-                    is MainState.Loading -> {
-                        binding?.pbLoading?.show()
-                        binding?.btnRetry?.gone()
-                    }
+            viewModel.uiState
+                //当生命周期处于 STARTED 之后执行代码，STOP 之后取消
+                .flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
+                //过滤重复
+                .distinctUntilChanged()
+                .collect {
+                    when (it) {
+                        is MainState.Idle -> {}
+                        is MainState.Loading -> {
+                            binding?.pbLoading?.show()
+                            binding?.btnLoadData?.gone()
+                        }
 
-                    is MainState.GetImageSuccess -> {
-                        binding?.pbLoading?.gone()
-                        binding?.btnRetry?.gone()
-                        binding?.rvImages?.show()
+                        is MainState.GetImageSuccess -> {
+                            binding?.pbLoading?.gone()
+                            binding?.btnLoadData?.gone()
+                            binding?.rvImages?.show()
 
-                        imageAdapter.submitList(it.images.resBean.imageInfoBean)
-                    }
+                            imageAdapter.submitList(it.images.resBean.imageInfoBean)
+                        }
 
-                    is MainState.Error -> {
-                        binding?.pbLoading?.gone()
-                        binding?.btnRetry?.show()
-                        Toast.makeText(this@MainActivity, it.error, Toast.LENGTH_SHORT).show()
+                        is MainState.Error -> {
+                            binding?.pbLoading?.gone()
+                            binding?.btnLoadData?.show()
+                            binding?.btnLoadData?.setText(R.string.retry)
+                            showToast(it.error)
+                        }
                     }
                 }
-            }
+        }
+    }
+
+    private fun observeEffect() {
+        lifecycleScope.launch {
+            viewModel.effect
+                .flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
+                .collect {
+                    when (it) {
+                        is MainEffect.ToastEffect -> {
+                            showToast(it.msg)
+                        }
+                    }
+                }
         }
     }
 
@@ -87,6 +109,10 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             viewModel.mainIntentChannel.send(MainIntent.GetImages)
         }
+    }
+
+    private fun showToast(msg: String) {
+        Toast.makeText(this@MainActivity, msg, Toast.LENGTH_SHORT).show()
     }
 }
 
