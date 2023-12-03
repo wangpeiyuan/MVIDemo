@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">MVIDemo</string>
+    <string name="load_image">Load Images</string>
+    <string name="retry">Retry</string>
 </resources>
