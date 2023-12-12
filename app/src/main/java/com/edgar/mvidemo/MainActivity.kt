@@ -9,7 +9,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.edgar.mvidemo.data.repository.ImageRepository
 import com.edgar.mvidemo.imagelist.ImageListScreen
+import com.edgar.mvidemo.imagelist.presenter.ImageListView
+import com.edgar.mvidemo.network.RetrofitUtils
 import com.edgar.mvidemo.ui.theme.MVIDemoTheme
 
 class MainActivity : ComponentActivity() {
@@ -29,7 +32,15 @@ fun MyApp(modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
+            //viewModel
             ImageListScreen(modifier = Modifier.fillMaxSize())
+
+            //presenter
+//            ImageListView(
+//                modifier = Modifier.fillMaxSize(), repository = ImageRepository(
+//                    RetrofitUtils.apiService
+//                )
+//            )
         }
     }
 }
